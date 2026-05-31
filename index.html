@@ -1546,7 +1546,7 @@ function App() {
     error: 'var(--rose-dark)',
   }[syncStatus];
 
-  const VIEWS = [['dashboard','Dashboard'],['pipeline','All Couples'],['stats','Stats'],['data','Data']];
+  const VIEWS = unlocked ? [['dashboard','Dashboard'],['pipeline','All Couples'],['stats','Stats'],['data','Data']] : [['stats','Stats']];
 
   return (
     <div>
