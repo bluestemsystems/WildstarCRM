@@ -1345,9 +1345,68 @@ function DataToolsView({ couples, onImport }) {
   );
 }
 
+// ─── LOGIN SCREEN ─────────────────────────────────────────────────────────────
+
+const PASSPHRASE = 'Raymond2025!';
+
+function LoginScreen({ onUnlock }) {
+  const [input, setInput] = useState('');
+  const [error, setError] = useState(false);
+  const [shake, setShake] = useState(false);
+
+  function attempt() {
+    if (input === PASSPHRASE) {
+      sessionStorage.setItem('wildstar_auth', '1');
+      onUnlock();
+    } else {
+      setError(true);
+      setShake(true);
+      setInput('');
+      setTimeout(() => setShake(false), 500);
+    }
+  }
+
+  return (
+    <div style={{minHeight:'100vh',background:'var(--ink)',display:'flex',alignItems:'center',justifyContent:'center',padding:20}}>
+      <div style={{width:'100%',maxWidth:360,textAlign:'center'}}>
+        <div style={{marginBottom:32}}>
+          <div style={{fontFamily:"'Playfair Display',serif",fontSize:22,fontWeight:700,color:'var(--cream)',letterSpacing:'0.02em',marginBottom:4}}>Wildstar Weddings</div>
+          <div style={{fontFamily:"'Raleway',sans-serif",fontSize:10,fontWeight:700,letterSpacing:'0.18em',textTransform:'uppercase',color:'var(--gold)'}}>CRM</div>
+        </div>
+        <div style={{background:'rgba(255,255,255,0.04)',border:'1px solid rgba(255,255,255,0.08)',borderRadius:8,padding:28,animation:shake?'shake 0.4s ease':'none'}}>
+          <div style={{fontFamily:"'Raleway',sans-serif",fontSize:11,fontWeight:600,textTransform:'uppercase',letterSpacing:'0.12em',color:'rgba(255,255,255,0.4)',marginBottom:14}}>Passphrase</div>
+          <input
+            className="input"
+            type="password"
+            value={input}
+            onChange={e=>{setInput(e.target.value);setError(false);}}
+            onKeyDown={e=>e.key==='Enter'&&attempt()}
+            placeholder="Enter passphrase"
+            autoFocus
+            style={{background:'rgba(255,255,255,0.06)',border:'1px solid rgba(255,255,255,0.12)',color:'var(--cream)',marginBottom:12,textAlign:'center',letterSpacing:'0.1em'}}
+          />
+          {error && <div style={{fontFamily:"'Raleway',sans-serif",fontSize:11,color:'var(--rose)',marginBottom:10,letterSpacing:'0.04em'}}>Incorrect passphrase</div>}
+          <button className="btn btn-gold" style={{width:'100%'}} onClick={attempt}>Unlock</button>
+        </div>
+        <div style={{marginTop:20,fontFamily:"'Raleway',sans-serif",fontSize:10,color:'rgba(255,255,255,0.2)',letterSpacing:'0.06em'}}>Wildstar Weddings · Central Texas</div>
+      </div>
+      <style>{`
+        @keyframes shake {
+          0%,100%{transform:translateX(0)}
+          20%{transform:translateX(-8px)}
+          40%{transform:translateX(8px)}
+          60%{transform:translateX(-6px)}
+          80%{transform:translateX(6px)}
+        }
+      `}</style>
+    </div>
+  );
+}
+
 // ─── APP ──────────────────────────────────────────────────────────────────────
 
 function App() {
+  const [unlocked, setUnlocked] = useState(() => sessionStorage.getItem('wildstar_auth') === '1');
   const [couples, setCouplesRaw] = useStorage('wildstar_couples', SAMPLE_COUPLES);
   const [view, setView] = useState('dashboard');
   const [showModal, setShowModal] = useState(false);
@@ -1487,7 +1546,7 @@ function App() {
     error: 'var(--rose-dark)',
   }[syncStatus];
 
-  const VIEWS = [['dashboard','Dashboard'],['pipeline','All Couples'],['stats','Stats'],['data','Data']];
+  const VIEWS = unlocked ? [['dashboard','Dashboard'],['pipeline','All Couples'],['stats','Stats'],['data','Data']] : [['stats','Stats']];
 
   return (
     <div>
@@ -1522,8 +1581,8 @@ function App() {
         </div>
       </header>
       <main>
-        {view === 'dashboard' && <DashboardView couples={couples.filter(c=>c.status!=='Declined')} onToggleDone={toggleDone} onEdit={openEdit} onDelete={c=>setConfirmDel(c)} onAdd={openAdd} />}
-        {view === 'pipeline'  && <PipelineView  couples={couples} onToggleDone={toggleDone} onEdit={openEdit} onDelete={c=>setConfirmDel(c)} onAdd={openAdd} />}
+        {view === 'dashboard' && (!unlocked ? <LoginScreen onUnlock={()=>setUnlocked(true)} /> : <DashboardView couples={couples.filter(c=>c.status!=='Declined')} onToggleDone={toggleDone} onEdit={openEdit} onDelete={c=>setConfirmDel(c)} onAdd={openAdd} />)}
+        {view === 'pipeline'  && (!unlocked ? <LoginScreen onUnlock={()=>setUnlocked(true)} /> : <PipelineView  couples={couples} onToggleDone={toggleDone} onEdit={openEdit} onDelete={c=>setConfirmDel(c)} onAdd={openAdd} />)}
         {view === 'stats'     && <StatsView couples={couples} />}
         {view === 'data'      && <DataToolsView couples={couples} onImport={setCouples} />}
       </main>
